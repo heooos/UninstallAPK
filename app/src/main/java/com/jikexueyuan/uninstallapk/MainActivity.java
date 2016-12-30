@@ -1,8 +1,11 @@
 package com.jikexueyuan.uninstallapk;
 
+import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -26,6 +29,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int flag;
     private boolean isPermission;
     private List<Bean> readToUninstall;
+    private ProgressDialog pd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +45,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             isPermission = true;
         } else {
             isPermission = false;
-
         }
         adapter = new CustomAdapter(this, list);
         apkList.setAdapter(adapter);
@@ -56,6 +59,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         list = new ArrayList<>();
         readToUninstall = new ArrayList<>();
         flag = 0;
+
+        pd = new ProgressDialog(this);
+        pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        pd.setTitle("卸载进度");
+        pd.setCancelable(false);
+
     }
 
     private void readAPKList() {
@@ -94,17 +103,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 }
                 final int num = readToUninstall.size();
+                if (num == 0) return;
+                pd.setMax(num);
                 final int[] completeNum = {0};
                 if (isPermission) {
+                    pd.show();
                     new Thread() {
                         @Override
                         public void run() {
-                            for (final Bean lists : readToUninstall) {
+                            for (Bean lists : readToUninstall) {
                                 if (APKController.uninstallInBackground(lists.getPackageName())) {
                                     completeNum[0]++;
                                     Message message = new Message();
                                     message.arg1 = num;
                                     message.arg2 = completeNum[0];
+                                    pd.setProgress(completeNum[0]);
                                     handler.sendMessage(message);
                                 } else {
                                     Log.d("log", "卸载失败");
@@ -114,24 +127,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                     }.start();
                 } else {
-//                    Uri packageURI = Uri.parse("package:" + lists.getPackageName());
-//                    Intent uninstallIntent = new Intent(Intent.ACTION_DELETE, packageURI);
-//                    uninstallIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                    startActivity(uninstallIntent);
+                    for (Bean lists : readToUninstall){
+                        Uri packageURI = Uri.parse("package:" + lists.getPackageName());
+                        Intent uninstallIntent = new Intent(Intent.ACTION_DELETE, packageURI);
+                        uninstallIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(uninstallIntent);
+                    }
+                    resumeListAndResetBtn();
                 }
-
-
                 break;
             case R.id.choose_all:
                 switch (flag) {
                     case 0:
+                        int numTag = 0;
                         for (Bean lists : list) {
                             if (lists.getType() == 1) {
                                 lists.setChecked(true);
+                                numTag++;
                             }
                         }
                         flag = 1;
-                        ((Button) v).setText("取消选择全部");
+
+                        ((Button) v).setText("取消选择全部" + "(" + numTag + ")");
                         break;
                     case 1:
                         for (Bean lists : list) {
@@ -146,20 +163,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private Object object = new Object();
     private Handler handler = new Handler() {
-
         @Override
         public void handleMessage(Message msg) {
-            Log.d("要卸载的应用数", msg.arg1 + "个");
-            Log.d("已经卸载的应用数", msg.arg2 + "个");
             if (msg.arg2 == msg.arg1) {
-                readAPKList();
-                adapter.notifyDataSetChanged();
+                flag = 0;
+                resumeListAndResetBtn();
+                pd.dismiss();
             }
-
             super.handleMessage(msg);
         }
     };
+
+    @Override
+    protected void onResume() {
+        resumeListAndResetBtn();
+        super.onResume();
+    }
+
+    private void resumeListAndResetBtn(){
+        readAPKList();
+        adapter.notifyDataSetChanged();
+        chooseAll.setText("选择全部非系统程序");
+    }
 
 }

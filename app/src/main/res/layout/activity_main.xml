@@ -6,34 +6,37 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context="com.jikexueyuan.uninstallapk.MainActivity">
+
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
-        android:background="?attr/colorPrimary"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize">
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary" />
 
-    </android.support.v7.widget.Toolbar>
     <ListView
         android:id="@+id/apk_list"
-        android:layout_weight="1"
         android:layout_width="match_parent"
-        android:layout_height="0dp"/>
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
     <LinearLayout
-        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
         <Button
-            android:text="选择全部非系统程序"
             android:id="@+id/choose_all"
-            android:layout_weight="1"
             android:layout_width="0dp"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="选择全部非系统程序" />
+
         <Button
-            android:text="卸载"
             android:id="@+id/uninstall"
-            android:layout_weight="1"
             android:layout_width="0dp"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="卸载" />
 
     </LinearLayout>
 
